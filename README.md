@@ -1,3 +1,9 @@
+Here is the original repository:
+
+https://github.com/adrianhajdin/project_corona_tracker
+
+Thanks @adrianhajdin
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
