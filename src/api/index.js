@@ -1,19 +1,19 @@
 import axios from 'axios';
-import CountryPicker from '../components/CountryPicker/CountryPicker';
+//import CountryPicker from '../components/CountryPicker/CountryPicker';
 
-const url = 'https://covid19.mathdro.id/api'
+var url = 'https://brasil.io/api/dataset/covid19/caso/data/'
 
-export const fetchData = async (country) => {
+export const fetchData = async (state) => {
     let changeableUrl = url;
 
-    if(country) {
-        changeableUrl = `${url}/countries/${country}`;
+    if(state) {
+        changeableUrl = `${url}?is_last=True&state=${state}&place_type=state`;
     }
 
     try {
-        const { data: { confirmed, recovered, deaths, lastUpdate } } = await axios.get(changeableUrl);
+        const { data: { confirmed, /*recovered, */deaths, date } } = await axios.get(changeableUrl);
 
-        return { confirmed, recovered, deaths, lastUpdate };
+        return { confirmed, /*recovered, */deaths, date };
 
     } catch (error) {
         console.log(error);
@@ -22,13 +22,28 @@ export const fetchData = async (country) => {
 
 export const fetchDailyData = async() => {
     try {
-        const { data } = await axios.get(`${url}/daily`);
+        var dataDate = [];
+        var dataNew;
+        do {
+            var data = await axios.get(`${url}`);
+            dataNew = data.data.results;
+            for(var i=0;i<dataNew.length;i++) {
+                if(dataDate[dataNew[i].date] != undefined) {
+                    dataDate[dataNew[i].date].confirmed += dataNew[i].confirmed;
+                    dataDate[dataNew[i].date].deaths += dataNew[i].deaths;
+                    dataDate[dataNew[i].date].date = dataNew[i].date;
+                } else {
+                    var newOb = {confirmed: dataNew[i].confirmed, deaths: dataNew[i].deaths, date: dataNew[i].date}
+                    dataDate[dataNew[i].date] = newOb;
+                }
+            }
+            url = data.data.next;
+        } while(data.data.next != null);
 
-        const modifiedData = data.map((dailyData) => ({
-            confirmed: dailyData.confirmed.total,
-            deaths: dailyData.deaths.total,
-            date: dailyData.reportDate,
-        }));
+        var modifiedData = [];
+        for(var d in dataDate) {
+            modifiedData.push(dataDate[d]);
+        }
     
         return modifiedData;
 
@@ -39,9 +54,8 @@ export const fetchDailyData = async() => {
 
 export const fetchCountries = async () => {
     try {
-        const {data: { countries }} = await axios.get(`${url}/countries`);
-
-        return countries.map((country) => country.name);
+        const {data: { state }} = await axios.get(`${url}&place_type=state`);
+        return state.map((state) => state.state);
     } catch (error) {
         console.log(error);
     }
